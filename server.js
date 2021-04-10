@@ -34,6 +34,14 @@ mongoose.connect(
     console.log("");
     app.set("view engine", "ejs"); // set up ejs for templating
 
+    if(process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, 'views', 'build')));
+
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, 'views', 'build', 'index.ejs'))
+    });
+
+  }
     // MIDDLEWARE
     //app.use(morgan("dev"));                     // log every request to the console
     app.use(cookieParser()); // read cookies (needed for auth)
