@@ -15,6 +15,9 @@ const app = express();
 // FIELDS
 const port = process.env.PORT || 8100;
 
+    app.get("/", function (req, res) {
+      res.render("index.ejs");
+    });
 // DATABASE
 mongoose.connect(
   process.env.DATABASE_URL || configDB.url,
@@ -50,9 +53,6 @@ mongoose.connect(
     app.use(flash()); //  for flash messages in session
 
 
-    app.get("/", function (req, res) {
-      res.render("index.ejs");
-    });
     // CRUD ACCESS ROUTES
     require("./app/routes/main.js")(app, passport, db);
 
