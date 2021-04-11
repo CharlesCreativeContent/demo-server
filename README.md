@@ -1,5 +1,9 @@
-# Template Website Starter Kit - Shawn Charles
+## Installation
 
-This is my go to starter when making a new website
+1. Clone repo
+2. run `npm install`
 
-### Stuff under here
+## Usage
+
+1. run `node server.js`
+2. Navigate to `localhost:8080`

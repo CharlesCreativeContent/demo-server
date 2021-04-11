@@ -1,72 +1,57 @@
-// IMPORTS
-const express = require("express");
-const mongoose = require("mongoose");
-const passport = require("passport");
-const flash = require("connect-flash");
-const morgan = require("morgan");
-const cookieParser = require("cookie-parser");
-const session = require("express-session");
-const path = require("path");
-const configDB = require("./app/config/database.js");
+// server.js
 
-// INSTANCE
-const app = express();
+//====================== set up =====================//
+//================all the tools we need==============//
+const express  = require('express');
+const app      = express();
+const port     = process.env.PORT || 8080;
+const mongoose = require('mongoose');
+const passport = require('passport');
+const flash    = require('connect-flash');
+const multer = require('multer');
+const ObjectId = require('mongodb').ObjectID
 
-// FIELDS
-const port = process.env.PORT || 8100;
+const morgan       = require('morgan');
+const cookieParser = require('cookie-parser');
+const bodyParser   = require('body-parser');
+const session      = require('express-session');
 
-    app.get("/", function (req, res) {
-      res.render("index.ejs");
-    });
-// DATABASE
-mongoose.connect(
-  process.env.DATABASE_URL || configDB.url,
-  { useNewUrlParser: true, useUnifiedTopology: true },
-  (err, database) => {
-    if (err) return console.error(err);
+const configDB = require('./config/database.js');
 
-    const db = database;
+//======================configuration =======================//
+mongoose.set('useNewUrlParser', true);
+mongoose.set('useUnifiedTopology', true);
+// connect to our database
+mongoose.connect(configDB.url, (err, database) => {
+  if (err) return console.log(err)
+  connect(database)
+});
 
-    require("./app/config/passport")(passport); // passport configuration
+//================set up our express application============//
+app.use(morgan('dev')); // log every request to the console
+app.use(cookieParser()); // read cookies (needed for auth)
+app.use(bodyParser.json()); // get information from html forms
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static('public'))
 
-    // RENDER ENGINE
-    app.set("views", __dirname + "/views");
-    console.log("");
-    app.set("view engine", "ejs"); // set up ejs for templating
+app.set('view engine', 'ejs'); // set up ejs for templating
 
-    if(process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, 'views', 'build')));
-
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, 'views', 'build', 'index.ejs'))
-    });
-
-  }
-    // MIDDLEWARE
-    //app.use(morgan("dev"));                     // log every request to the console
-    app.use(cookieParser()); // read cookies (needed for auth)
-    app.use(express.json()); // get information from html forms
-    app.use(express.urlencoded({ extended: true }));
-    app.use(express.static("public")); // access public resources
-    app.use(
-      session({
-        // passport sessions
-        secret: "new Venture LLC", // session secret...DONT TELL ANYONE
-        resave: true,
-        saveUninitialized: true,
-      })
-    );
-    app.use(passport.initialize());
-    app.use(passport.session());
-    app.use(flash()); //  for flash messages in session
+// required for passport
+require('./config/passport')(passport); // pass passport for configuration
+app.use(session({
+    secret: 'rcbootcamp2019c', // session secret
+    resave: true,
+    saveUninitialized: true
+}));
+app.use(passport.initialize());
+app.use(passport.session()); // persistent login sessions
+app.use(flash()); // use connect-flash for flash messages stored in session
 
 
+// routes ======================================================================
+const connect = (db) => require('./app/routes.js')(app, passport, db, multer, ObjectId); // load our routes and pass in our app and fully configured passport
 
-    // CRUD ACCESS ROUTES
-    require("./app/routes/main.js")(app, passport, db);
 
-  }
-);
-
+// launch ======================================================================
 app.listen(port);
-console.log("The magic happens on port " + port);
+console.log('The magic happens on port ' + port);
